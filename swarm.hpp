@@ -2,7 +2,7 @@
 #define SWARM_H
 
 #include <ctime>
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include "core.hpp"
 #include "entity.hpp"

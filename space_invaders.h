@@ -1,7 +1,7 @@
 #ifndef SPACE_INVADERS_H
 #define SPACE_INVADERS_H
 
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include "core.hpp"
 #include "keybuffer.hpp"
@@ -9,11 +9,13 @@
 #include "entity.hpp"
 #include "ship.hpp"
 #include "alien.hpp"
+#include "swarm.hpp"
 #include "projectile.hpp"
 
 inline void loop(SDL_Window *window, SDL_Renderer *renderer);
 inline void render(SDL_Renderer *renderer, EntityList& entities);
 inline void render_all(SDL_Renderer *renderer, EntityList& entities);
+inline void render_string(SDL_Renderer *renderer, const char *str);
 
 // Adds the pressed key if not in the key buffer
 // and removes the released key if in the key buffer

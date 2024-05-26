@@ -1,15 +1,9 @@
 #include <iostream>
+#include <string>
 #include <ctime>
-#include <SDL.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
-#include "core.hpp"
-#include "keybuffer.hpp"
-#include "entitylist.hpp"
-#include "entity.hpp"
-#include "ship.hpp"
-#include "alien.hpp"
-#include "swarm.hpp"
-#include "projectile.hpp"
 #include "space_invaders.h"
 
 void test_swarm(EntityList& entities, Swarm *s) {
@@ -24,19 +18,29 @@ int main(int argc, char **argv) {
         std::cerr << SDL_GetError() << std::endl;
         return EXIT_FAILURE;
     }
+
+    if (TTF_Init() < 0) {
+        std::cerr << TTF_GetError() << std::endl;
+        return EXIT_FAILURE;
+    }
     
-    srand(time(NULL));
+    srand(time(nullptr));
     core = new Core(800, 600, 10, 5);
 
-    window = SDL_CreateWindow("Space invaders", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, core->get_width(), core->get_height(), SDL_WINDOW_SHOWN);
-    if (window == NULL) {
+    window = SDL_CreateWindow("Space invaders",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        core->get_width(),
+        core->get_height(),
+        SDL_WINDOW_SHOWN);
+    if (window == nullptr) {
         std::cerr << SDL_GetError() << std::endl;
         SDL_Quit();
         return EXIT_FAILURE;
     }
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (renderer == NULL) {
+    if (renderer == nullptr) {
         std::cerr << SDL_GetError() << std::endl;
         SDL_DestroyWindow(window);
         SDL_Quit();
@@ -57,9 +61,9 @@ void loop(SDL_Window *window, SDL_Renderer *renderer) {
     //bool cont;
 
     // Entity handler
-    EntityList entities = EntityList();
+    EntityList entities;
     // Buffer for keyboard key presses
-    KeyBuffer keybuff = KeyBuffer();
+    KeyBuffer keybuff;
 
     // Player statistics
     double player_init_x = core->get_width() / 2;
@@ -80,10 +84,7 @@ void loop(SDL_Window *window, SDL_Renderer *renderer) {
         while (running && !core->is_game_over()) {
             running = get_input(keybuff);
             move_player(keybuff, player);
-            //shoot_player(entities, keybuff, player);
-            if (keybuff.find_key(SDLK_SPACE)) {
-                test_swarm(entities);
-            }
+            shoot_player(entities, keybuff, player);
 
             if (entities.how_many_instances_of(ALIEN) == 0) {
                 delete swarm;   // Removes the last swarm of aliens to create the next one
@@ -95,9 +96,8 @@ void loop(SDL_Window *window, SDL_Renderer *renderer) {
 
             render(renderer, entities);
             core->update_frame();
-            std::cout << "Score: " << core->get_score() << std::endl << "\033[1A";
         }
-        std::cout << "game over";
+        render_string(renderer, "Game over");
         entities.clear();
     //} while (cont);
 }
@@ -131,7 +131,6 @@ Swarm *spawn_aliens(EntityList& entities) {
 
 void update(EntityList& entities, Swarm *s) {
     s->update();
-
     for (int i = 0; i < entities.size(); i++) {
         Entity *e = entities[i];
         e->update();
@@ -174,6 +173,8 @@ void render(SDL_Renderer *renderer, EntityList& entities) {
     SDL_RenderClear(renderer);
 
     render_all(renderer, entities);
+    std::string score = "Score: " + std::to_string(core->get_score());
+    render_string(renderer, score.c_str());
 
     SDL_RenderPresent(renderer);
 }
@@ -187,6 +188,34 @@ void render_all(SDL_Renderer *renderer, EntityList& entities) {
         SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
         SDL_RenderFillRect(renderer, rect);
     }
+}
+
+void render_string(SDL_Renderer *renderer, const char *str) {
+    TTF_Font *font = TTF_OpenFont("font.ttf", 24);
+    if (font == nullptr) {
+        std::cerr << "Font failed to create: " << TTF_GetError() << std::endl;
+        std::abort();
+    }
+    SDL_Surface* textSurface = TTF_RenderText_Solid(font, str, white);
+    if (textSurface == nullptr) {
+        std::cerr << TTF_GetError() << std::endl;
+        std::abort();
+    }
+    SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+    if (textTexture == nullptr) {
+        std::cerr << SDL_GetError() << std::endl;
+        std::abort();
+    }
+    SDL_FreeSurface(textSurface);
+
+    // Ottieni le dimensioni della texture
+    int textWidth = 0;
+    int textHeight = 0;
+    SDL_QueryTexture(textTexture, NULL, NULL, &textWidth, &textHeight);
+    SDL_Rect renderQuad = { 20, 20, textWidth, textHeight };
+
+    SDL_RenderCopy(renderer, textTexture, NULL, &renderQuad);
+    SDL_DestroyTexture(textTexture);
 }
 
 bool get_input(KeyBuffer& keybuff) {

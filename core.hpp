@@ -1,8 +1,8 @@
 #ifndef CORE_H
 #define CORE_H
 
-#include <SDL.h>
 #include <ctime>
+#include <SDL2/SDL.h>
 
 #define DIRECTIONS 4
 
