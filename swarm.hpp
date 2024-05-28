@@ -16,8 +16,8 @@ public:
         aliens = new Alien *[core->max_aliens];
         aliens_alive = 0;
         velocity = 1.0;
-        shoot_frequency = 5.0;
-        width = (core->get_entity_width() * 4) * core->max_aliens_per_row;
+        shoot_frequency = 0.050;
+        width = core->get_entity_width() * (3 * core->max_aliens_per_row - 2);
         reset_timer();
     }
 

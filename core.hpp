@@ -8,8 +8,9 @@
 
 typedef unsigned int uint;
 
-const SDL_Color green = { 0, 255, 0, 255 };
+const SDL_Color black = { 0, 0, 0, 255 };
 const SDL_Color white = { 255, 255, 255, 255 };
+const SDL_Color green = { 0, 255, 0, 255 };
 const SDL_Color yellow = { 255, 255, 0, 255 };
 
 enum Bounds {
@@ -28,8 +29,9 @@ public:
         this->max_aliens_per_row = max_aliens_per_row;
         this->max_rows = max_rows;
         max_aliens = max_aliens_per_row * max_rows;
-        entity_width = 10.0;
-        bounds[LEFT] = entity_width * 4;
+        entity_width = 20.0;
+        entity_height = 10.0;
+        bounds[LEFT] = entity_width * 2;
         bounds[RIGHT] = width - bounds[LEFT];
         bounds[TOP] = 0.0;
         bounds[BOTTOM] = height;
@@ -62,6 +64,10 @@ public:
 
     double get_entity_width() {
         return entity_width;
+    }
+
+    double get_entity_height() {
+        return entity_height;
     }
 
     void add_score(uint score) {
@@ -111,6 +117,7 @@ private:
     double last_frame_time;
     double delta_time;
     double entity_width;
+    double entity_height;
     double bounds[DIRECTIONS];
 };
 

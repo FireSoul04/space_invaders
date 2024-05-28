@@ -81,15 +81,13 @@ void loop(SDL_Window *window, SDL_Renderer *renderer) {
     entities.instantiate(player);
     //do {
         core->reset_game_over();
-        while (running && !core->is_game_over()) {
+        while (running && !core->is_game_over() && 
+            !keybuff.find_key(SDLK_ESCAPE)) {
             running = get_input(keybuff);
             move_player(keybuff, player);
             shoot_player(entities, keybuff, player);
 
-            if (entities.how_many_instances_of(ALIEN) == 0) {
-                delete swarm;   // Removes the last swarm of aliens to create the next one
-                swarm = spawn_aliens(entities);
-            }
+            check_aliens_alive(entities, swarm);
             shoot_swarm(entities, swarm);
 
             update(entities, swarm);
@@ -97,36 +95,17 @@ void loop(SDL_Window *window, SDL_Renderer *renderer) {
             render(renderer, entities);
             core->update_frame();
         }
+        SDL_SetRenderDrawColor(renderer, black.r, black.g, black.b, black.a);
+        SDL_RenderClear(renderer);
         render_string(renderer, "Game over");
+        SDL_RenderPresent(renderer);
         entities.clear();
+
+        while (!keybuff.find_key(SDLK_ESCAPE)) {
+            get_input(keybuff);
+        }
     //} while (cont);
-}
-
-Swarm *spawn_aliens(EntityList& entities) {
-    Alien *a;
-    SDL_Rect *rect;
-    double init_x;
-    double init_y;
-    double offset_x;
-    double offset_y;
-    double swarm_init_x = core->get_bounds(LEFT);
-    double swarm_init_y = core->get_bounds(TOP);
-    double swarm_speed = 50.0;
-    Swarm *s = new Swarm(swarm_init_x, swarm_init_y, swarm_speed);
-
-    for (int i = 0; i < core->max_aliens; i++) {
-        rect = new SDL_Rect();
-        offset_x = core->get_entity_width() * 4 * (i % core->max_aliens_per_row);
-        offset_y = 40 * (i / core->max_aliens_per_row);
-        init_x = core->get_bounds(LEFT) + offset_x;
-        init_y = 200 + offset_y;
-        rect->w = core->get_entity_width();
-        rect->h = core->get_entity_width();
-        a = new Alien(init_x, init_y, s->get_speed(), rect, white);
-        s->add_alien(a, i);
-        entities.instantiate(a);
-    }
-    return s;
+    swarm->~Swarm();
 }
 
 void update(EntityList& entities, Swarm *s) {
@@ -137,34 +116,6 @@ void update(EntityList& entities, Swarm *s) {
         if (e->get_class() == PROJECTILE) {
             remove_projectiles(entities, s, (Projectile *)e);
         }
-    }
-}
-
-void remove_projectiles(EntityList& entities, Swarm *s, Projectile *p) {
-    bool is_colliding = false;
-    Entity *entity_hit = nullptr;
-    for (int i = 0; i < entities.size() && !is_colliding; i++) {
-        is_colliding = p->is_colliding(entities[i]);
-        if (is_colliding) {
-            entity_hit = entities[i];
-        }
-    }
-
-    if (is_colliding) {
-        if (entity_hit->get_class() == ALIEN) {
-            s->remove_alien((Alien *)entity_hit);
-        }
-        entities.remove(p);
-        entities.remove(entity_hit);
-    } else if (p->out_of_bounds()) {
-        entities.remove(p);
-    }
-}
-
-void shoot_swarm(EntityList& entities, Swarm *s) {
-    Projectile *p = s->shoot();
-    if (p != nullptr) {
-        entities.instantiate(p);
     }
 }
 
@@ -218,6 +169,73 @@ void render_string(SDL_Renderer *renderer, const char *str) {
     SDL_DestroyTexture(textTexture);
 }
 
+void check_aliens_alive(EntityList& entities, Swarm *s) {
+    if (entities.how_many_instances_of(ALIEN) == 0) {
+        delete s;   // Removes the last swarm of aliens to create the next one
+        s = spawn_aliens(entities);
+    }
+}
+
+Swarm *spawn_aliens(EntityList& entities) {
+    Alien *a;
+    SDL_Rect *rect;
+    double init_x;
+    double init_y;
+    double offset_x;
+    double offset_y;
+    double swarm_init_x = core->get_bounds(LEFT);
+    double swarm_init_y = core->get_bounds(TOP);
+    double swarm_speed = 30.0;
+    Swarm *s = new Swarm(swarm_init_x, swarm_init_y, swarm_speed);
+
+    for (int i = 0; i < core->max_aliens; i++) {
+        rect = new SDL_Rect();
+        offset_x = core->get_entity_width() * 3 * (i % core->max_aliens_per_row);
+        offset_y = 40 * (i / core->max_aliens_per_row);
+        init_x = core->get_bounds(LEFT) + offset_x;
+        init_y = 200 + offset_y;
+        rect->w = core->get_entity_width();
+        rect->h = core->get_entity_height();
+        a = new Alien(init_x, init_y, s->get_speed(), rect, white);
+        s->add_alien(a, i);
+        entities.instantiate(a);
+    }
+    return s;
+}
+
+void remove_projectiles(EntityList& entities, Swarm *s, Projectile *p) {
+    bool is_colliding = false;
+    Entity *entity_hit = nullptr;
+    for (int i = 0; i < entities.size() && !is_colliding; i++) {
+        is_colliding = p->is_colliding(entities[i]);
+        if (is_colliding) {
+            entity_hit = entities[i];
+        }
+    }
+
+    if (is_colliding) {
+        entities.remove(p);
+        if (entity_hit->get_class() == ALIEN) {
+            s->remove_alien((Alien *)entity_hit);
+        }
+        if (entity_hit->get_class() == SHIP &&
+            ((Ship *)entity_hit)->is_alive()) {
+            ((Ship *)entity_hit)->die();
+        } else {
+            entities.remove(entity_hit);
+        }
+    } else if (p->out_of_bounds()) {
+        entities.remove(p);
+    }
+}
+
+void shoot_swarm(EntityList& entities, Swarm *s) {
+    Projectile *p = s->shoot();
+    if (p != nullptr) {
+        entities.instantiate(p);
+    }
+}
+
 bool get_input(KeyBuffer& keybuff) {
     SDL_Event event;
 
@@ -267,6 +285,7 @@ void key_pressed(SDL_Keycode key, KeyBuffer& keybuff) {
     case SDLK_a:
     case SDLK_d:
     case SDLK_SPACE:
+    case SDLK_ESCAPE:
         if (!keybuff.find_key(key)) {
             keybuff.push(key);
         }
@@ -279,6 +298,7 @@ void key_released(SDL_Keycode key, KeyBuffer& keybuff) {
     case SDLK_a:
     case SDLK_d:
     case SDLK_SPACE:
+    case SDLK_ESCAPE:
         keybuff.remove_key(key);
         break;
     }

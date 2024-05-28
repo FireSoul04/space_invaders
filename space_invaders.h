@@ -33,6 +33,7 @@ inline void shoot_player(EntityList& entities, KeyBuffer& keybuff, Ship *player)
 
 // Aliens handler
 inline Swarm *spawn_aliens(EntityList& entities);
+inline void check_aliens_alive(EntityList& entities, Swarm *s);
 inline void shoot_swarm(EntityList& entities, Swarm *s);
 
 // Projectiles handler

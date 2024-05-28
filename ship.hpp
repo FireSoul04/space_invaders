@@ -56,6 +56,14 @@ public:
         return p;
     }
 
+    void die() {
+        lives--;
+    }
+
+    bool is_alive() {
+        return lives > 0;
+    }
+
     SDL_Rect *get_sprite() {
         return sprite;
     }
