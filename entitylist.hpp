@@ -6,6 +6,7 @@
 #include "entity.hpp"
 #include "ship.hpp"
 #include "alien.hpp"
+#include "wall.hpp"
 #include "projectile.hpp"
 
 #define MAX_ENTITIES 256
@@ -94,6 +95,9 @@ private:
             break;
         case PROJECTILE:
             ((Projectile *)e)->~Projectile();
+            break;
+        case WALL:
+            ((Wall *)e)->~Wall();
             break;
         }
         delete e;

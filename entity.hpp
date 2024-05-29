@@ -8,6 +8,7 @@ enum EntityClass {
     SHIP,
     ALIEN,
     SWARM,
+    WALL,
     PROJECTILE
 };
 
@@ -20,12 +21,26 @@ public:
         velocity = 0.0;
     }
 
+    Entity(double x, double y) {
+        this->x = x;
+        this->y = y;
+        speed = 0.0;
+        velocity = 0.0;
+    }
+
     bool is_colliding(Entity *e) {
         bool is_colliding = false;
         if (e != this) {
-            double x1 = this->x + get_sprite()->w / 2;
-            double x2 = e->X() + e->get_sprite()->w / 2;
-            if (SDL_abs(x2 - x1) < 10.0 && SDL_abs(y - e->Y()) < 1.0) {
+            double offsetw = get_sprite()->w / 2;
+            double offseth = get_sprite()->h;
+            double e_offsetw = e->get_sprite()->w / 2;
+            double e_offseth = e->get_sprite()->h;
+            double x1 = x + offsetw;
+            double x2 = e->X() + e_offsetw;
+            double y1 = y + offseth;
+            double y2 = e->Y() + e_offseth;
+            if (SDL_abs(x2 - x1) < e_offsetw && 
+                SDL_abs(y2 - y1) < e_offseth) {
                 is_colliding = true;
             }
         }

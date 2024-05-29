@@ -38,6 +38,7 @@ public:
         fps = 0.0;
         total_frames = 0.0;
         total_seconds = 0.0;
+        stage = 1;
         time_start = clock();
         last_frame_time = time_start;
     }
@@ -68,6 +69,14 @@ public:
 
     double get_entity_height() {
         return entity_height;
+    }
+
+    uint get_stage() {
+        return stage;
+    }
+
+    void increase_stage() {
+        stage++;
     }
 
     void add_score(uint score) {
@@ -107,6 +116,7 @@ public:
 
 private:
     uint score;
+    uint stage;
     uint width;
     uint height;
     bool game_over;

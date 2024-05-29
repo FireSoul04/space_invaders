@@ -11,12 +11,13 @@
 
 class Swarm : public Entity {
 public:
-    Swarm(double x, double y, double speed) : Entity(x, y, speed) {
-        this->speed = speed;
+    Swarm(double x, double y) : Entity(x, y) {
+        this->shoot_frequency = shoot_frequency;
         aliens = new Alien *[core->max_aliens];
+        init_x = x;
+        init_y = y;
         aliens_alive = 0;
         velocity = 1.0;
-        shoot_frequency = 0.050;
         width = core->get_entity_width() * (3 * core->max_aliens_per_row - 2);
         reset_timer();
     }
@@ -32,6 +33,14 @@ public:
         std::cout << std::endl << "\033[1A";
     }
 
+    void restart() {
+        x = init_x;
+        y = init_y;
+        aliens_alive = 0;
+        velocity = 1.0;
+        reset_timer();
+    }
+
     // Handles out of bounds
     void update() {
         if (x < core->get_bounds(LEFT) ||
@@ -39,6 +48,7 @@ public:
             velocity *= -1.0;
         }
         x += velocity * speed * core->get_delta_time();
+        y += (speed / 16) * core->get_delta_time();
         // Update all aliens alive in the swarm
         for (int i = 0; i < core->max_aliens; i++) {
             if (aliens[i] != nullptr) {
@@ -81,6 +91,14 @@ public:
         }
     }
 
+    void set_shoot_frequency(double shoot_frequency) {
+        this->shoot_frequency = shoot_frequency;
+    }
+
+    void set_speed(double speed) {
+        this->speed = speed;
+    }
+
     double get_speed() {
         return speed;
     }
@@ -113,7 +131,7 @@ private:
             int random = rand() % core->max_aliens_per_row;
             int row = 0;
             // Search the alien in the random column and in the last row alive
-            for (int i = core->max_rows - 1; i > 0 && random_alien == nullptr; i--) {
+            for (int i = core->max_rows - 1; i >= 0 && random_alien == nullptr; i--) {
                 row = core->max_aliens_per_row * i;
                 random_alien = aliens[random + row];
             }
@@ -127,6 +145,8 @@ private:
     clock_t shoot_timer;
     double shoot_frequency;
     double width;
+    double init_x;
+    double init_y;
 };
 
 #endif

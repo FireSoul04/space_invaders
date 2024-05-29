@@ -20,7 +20,10 @@ public:
         this->shoot_frequency = shoot_frequency;
         lives = 3;
         projectile_speed = 3000.0;
-        reset_timer();
+        max_iframe = 2.0;
+        fade = 1;
+        reset_shoot_timer();
+        reset_invincible();
     }
 
     ~Ship() {
@@ -36,6 +39,12 @@ public:
             x += velocity * speed * core->get_delta_time();
             sprite->x = (int)x;
         }
+
+        double end_iframe = time_elapsed(invincible_timer);
+        if (end_iframe >= max_iframe) {
+            reset_invincible();
+        }
+        animate_iframe();
     }
 
     Projectile *shoot() {
@@ -57,11 +66,22 @@ public:
     }
 
     void die() {
-        lives--;
+        if (!invincible) {
+            lives--;
+            invincible = true;
+        }
     }
 
     bool is_alive() {
         return lives > 0;
+    }
+
+    uint get_lives() {
+        return lives;
+    }
+
+    bool is_invincible() {
+        return invincible;
     }
 
     SDL_Rect *get_sprite() {
@@ -77,27 +97,49 @@ public:
     }
     
 private:
-    double time_elapsed() {
-        return (clock() - shoot_timer) / (double)CLOCKS_PER_SEC;
+    double time_elapsed(clock_t timer) {
+        return (clock() - timer) / (double)CLOCKS_PER_SEC;
     }
 
     bool is_ready_to_shoot() {
         bool is_ready = false;
-        if (time_elapsed() >= shoot_frequency) {
-            reset_timer();
+        if (time_elapsed(shoot_timer) >= shoot_frequency) {
+            reset_shoot_timer();
             is_ready = true;
         }
         return is_ready;
     }
 
-    void reset_timer() {
+    void animate_iframe() {
+        if (invincible) {
+            if (color.g >= 250) {
+                fade = -1;
+            } else if (color.g == 0) {
+                fade = 1;
+            }
+            color.g += 3 * fade;
+        } else {
+            color.g = 255;
+        }
+    }
+
+    void reset_shoot_timer() {
         shoot_timer = clock();
+    }
+
+    void reset_invincible() {
+        invincible = false;
+        invincible_timer = clock();
     }
 
 private:
     SDL_Rect *sprite;
     SDL_Color color;
     uint lives;
+    bool invincible;
+    clock_t invincible_timer;
+    double max_iframe;
+    int fade;
     clock_t shoot_timer;
     double shoot_frequency;
     double projectile_speed;

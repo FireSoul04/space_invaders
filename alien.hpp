@@ -29,7 +29,9 @@ public:
     // Handles out of bounds
     void update() {
         x += velocity * speed * core->get_delta_time();
+        y += (speed / 16) * core->get_delta_time();
         sprite->x = (int)x;
+        sprite->y = (int)y;
     }
 
     Projectile *shoot() {
