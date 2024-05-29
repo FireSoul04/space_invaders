@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
     }
     
     srand(time(nullptr));
-    core = new Core(800, 600, 1, 1);
+    core = new Core(800, 600, 10, 5);
 
     window = SDL_CreateWindow("Space invaders",
         SDL_WINDOWPOS_CENTERED,
@@ -65,7 +65,7 @@ void loop(SDL_Window *window, SDL_Renderer *renderer) {
     double player_init_x = core->get_width() / 2;
     double player_init_y = core->get_height() * 7 / 8;
     double player_speed = 200.0;
-    double player_shoot_frequency = 0.1;
+    double player_shoot_frequency = 1.0;
     SDL_Rect *rect = new SDL_Rect();
     rect->w = 10;
     rect->h = 10;
@@ -73,7 +73,7 @@ void loop(SDL_Window *window, SDL_Renderer *renderer) {
 
     double swarm_init_x = core->get_bounds(LEFT);
     double swarm_init_y = core->get_bounds(TOP);
-    Swarm swarm = Swarm(swarm_init_x, swarm_init_y);
+    Swarm swarm(swarm_init_x, swarm_init_y);
     spawn_aliens(entities, swarm);
     
     running = true;
