@@ -36,10 +36,10 @@ public:
 
     Projectile *shoot() {
         SDL_Rect *rect = new SDL_Rect();
-        rect->w = 4;
-        rect->h = 8;
+        rect->w = 5;
+        rect->h = 10;
         double offset_x = (sprite->w / 2) - (rect->w / 2);
-        double offset_y = sprite->h;
+        double offset_y = sprite->h + core->get_entity_height();
         double x, y;
 
         x = this->x + offset_x;

@@ -12,10 +12,10 @@
 class Swarm : public Entity {
 public:
     Swarm(double x, double y) : Entity(x, y) {
-        this->shoot_frequency = shoot_frequency;
         aliens = new Alien *[core->max_aliens];
         init_x = x;
         init_y = y;
+        shoot_frequency = 0;
         aliens_alive = 0;
         velocity = 1.0;
         width = core->get_entity_width() * (3 * core->max_aliens_per_row - 2);
@@ -47,8 +47,10 @@ public:
             x + width > core->get_bounds(RIGHT)) {
             velocity *= -1.0;
         }
+
         x += velocity * speed * core->get_delta_time();
         y += (speed / 16) * core->get_delta_time();
+        
         // Update all aliens alive in the swarm
         for (int i = 0; i < core->max_aliens; i++) {
             if (aliens[i] != nullptr) {
@@ -63,7 +65,6 @@ public:
         // Make random alien shoot
         if (is_ready_to_shoot() && aliens_alive > 0) {
             Alien *random_alien = search_random_alien();
-
             p = random_alien->shoot();
         }
 

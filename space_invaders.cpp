@@ -6,6 +6,21 @@
 
 #include "space_invaders.h"
 
+double start_swarm_speed;
+void test_speedup(KeyBuffer& keybuff, EntityList& entities, Swarm& s) {
+    if (keybuff.find_key(SDLK_LSHIFT)) {
+        s.set_speed(10000.0);
+    } else {
+        s.set_speed(start_swarm_speed);
+    }
+    
+    for (int i = 0; i < entities.size(); i++) {
+        if (entities[i] != nullptr && entities[i]->get_class() == ALIEN) {
+            entities[i]->set_speed(s.get_speed());
+        }
+    }
+}
+
 int main(int argc, char **argv) {
     SDL_Window *window;
     SDL_Renderer *renderer;
@@ -43,7 +58,9 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    loop(window, renderer);
+    EntityList entities;    // Entity handler
+    init(entities);
+    loop(window, renderer, entities);
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -52,35 +69,34 @@ int main(int argc, char **argv) {
     return EXIT_SUCCESS;
 }
 
-void loop(SDL_Window *window, SDL_Renderer *renderer) {
-    bool running;
-    //bool cont;
-
-    // Entity handler
-    EntityList entities;
-    // Buffer for keyboard key presses
-    KeyBuffer keybuff;
-
-    // Player statistics
+void init(EntityList& entities) {
+    // Player details
     double player_init_x = core->get_width() / 2;
     double player_init_y = core->get_height() * 7 / 8;
     double player_speed = 200.0;
-    double player_shoot_frequency = 1.0;
+    double player_shoot_frequency = 1.0; // Seconds
     SDL_Rect *rect = new SDL_Rect();
-    rect->w = 10;
-    rect->h = 10;
+    rect->w = (int)core->get_entity_width();
+    rect->h = (int)core->get_entity_height();
     Ship *player = new Ship(player_init_x, player_init_y, player_speed, player_shoot_frequency, rect, green);
+    entities.instantiate(player);
+}
 
+void loop(SDL_Window *window, SDL_Renderer *renderer, EntityList& entities) {
+    bool running;           // Condition to break the main game loop
+    KeyBuffer keybuff;      // Buffer for keyboard key presses
+    Ship *player = (Ship *)entities[0];    // First entity is always player
+
+    // Swarm details
     double swarm_init_x = core->get_bounds(LEFT);
     double swarm_init_y = core->get_bounds(TOP);
     Swarm swarm(swarm_init_x, swarm_init_y);
     spawn_aliens(entities, swarm);
-    
-    running = true;
-
     spawn_walls(entities);
-    entities.instantiate(player);
-    //do {
+
+    start_swarm_speed = swarm.get_speed();
+    running = true;
+    while (running) {
         core->reset_game_over();
         while (running && !core->is_game_over() && 
             !keybuff.find_key(SDLK_ESCAPE)) {
@@ -88,13 +104,18 @@ void loop(SDL_Window *window, SDL_Renderer *renderer) {
             move_player(keybuff, player);
             shoot_player(entities, keybuff, player);
 
+            check_game_over(swarm);
             check_aliens_alive(entities, swarm);
             shoot_swarm(entities, swarm);
-
             update(entities, swarm);
+
+            // TESTING
+            test_speedup(keybuff, entities, swarm);
+            // TESTING
 
             render(renderer, entities, player->get_lives());
             core->update_frame();
+            std::cout << core->get_fps() << "\033[1A" << std::endl;
         }
         SDL_SetRenderDrawColor(renderer, black.r, black.g, black.b, black.a);
         SDL_RenderClear(renderer);
@@ -105,7 +126,7 @@ void loop(SDL_Window *window, SDL_Renderer *renderer) {
         while (running && !keybuff.find_key(SDLK_ESCAPE)) {
             running = get_input(keybuff);
         }
-    //} while (cont);
+    }
 }
 
 void update(EntityList& entities, Swarm& s) {
@@ -161,7 +182,6 @@ void render_string(SDL_Renderer *renderer, const char *str, int x, int y) {
     }
     SDL_FreeSurface(textSurface);
 
-    // Ottieni le dimensioni della texture
     int textWidth = 0;
     int textHeight = 0;
     SDL_QueryTexture(textTexture, nullptr, nullptr, &textWidth, &textHeight);
@@ -171,22 +191,26 @@ void render_string(SDL_Renderer *renderer, const char *str, int x, int y) {
     SDL_DestroyTexture(textTexture);
 }
 
+void check_game_over(Swarm& swarm) {
+    if (swarm.Y() >= core->get_game_over_threshold()) {
+        core->set_game_over();
+    }
+}
+
 void spawn_walls(EntityList& entities) {
     Wall *w;
     SDL_Rect *rect;
-    double init_x;
-    double init_y;
-    double offset_x;
+    double init_y = 420; // The walls spawn at the same y
+    double init_x = core->get_bounds(LEFT) + 100;
+    double offset_x = core->get_entity_width() * 8; // Distance from the wall at his left
 
     for (int i = 0; i < MAX_WALLS; i++) {
         rect = new SDL_Rect();
-        offset_x = core->get_entity_width() * 8 * i;
-        init_x = core->get_bounds(LEFT) + 100 + offset_x;
-        init_y = 420;
         rect->w = core->get_entity_width() * 2;
         rect->h = core->get_entity_width() * 2;
         w = new Wall(init_x, init_y, rect, green);
         entities.instantiate(w);
+        init_x += offset_x; 
     }
 }
 
@@ -206,12 +230,12 @@ void spawn_aliens(EntityList& entities, Swarm& s) {
 
     for (int i = 0; i < core->max_aliens; i++) {
         rect = new SDL_Rect();
+        rect->w = core->get_entity_width();
+        rect->h = core->get_entity_height();
         offset_x = core->get_entity_width() * 3 * (i % core->max_aliens_per_row);
         offset_y = 40 * (i / core->max_aliens_per_row);
         init_x = core->get_bounds(LEFT) + offset_x;
         init_y = 100 + offset_y;
-        rect->w = core->get_entity_width();
-        rect->h = core->get_entity_height();
         a = new Alien(init_x, init_y, s.get_speed(), rect, white);
         s.add_alien(a, i);
         entities.instantiate(a);
@@ -233,10 +257,6 @@ void shoot_swarm(EntityList& entities, Swarm& s) {
 }
 
 void remove_projectiles(EntityList& entities, Swarm& s, Projectile *p) {
-    if (p->is_invincible()) {
-        return;
-    }
-
     bool is_colliding = false;
     Entity *entity_hit = nullptr;
     for (int i = 0; i < entities.size() && !is_colliding; i++) {
@@ -247,22 +267,26 @@ void remove_projectiles(EntityList& entities, Swarm& s, Projectile *p) {
     }
 
     if (is_colliding) {
-        if (entity_hit->get_class() == ALIEN) {
-            s.remove_alien((Alien *)entity_hit);
-        }
-
-        if (entity_hit->get_class() == SHIP &&
-            ((Ship *)entity_hit)->is_alive()) {
-            ((Ship *)entity_hit)->die();
-        } else if (entity_hit->get_class() == WALL &&
-            ((Wall *)entity_hit)->is_alive()) {
-            ((Wall *)entity_hit)->hit();
-        } else {
-            entities.remove(entity_hit);
-        }
+        remove_entity_colliding(entities, s, entity_hit);
         entities.remove(p);
     } else if (p->out_of_bounds()) {
         entities.remove(p);
+    }
+}
+
+void remove_entity_colliding(EntityList& entities, Swarm& s, Entity *e) {
+    if (e->get_class() == ALIEN) {
+        s.remove_alien((Alien *)e);
+    }
+
+    if (e->get_class() == SHIP &&
+        ((Ship *)e)->is_alive()) {
+        ((Ship *)e)->die();
+    } else if (e->get_class() == WALL &&
+        ((Wall *)e)->is_alive()) {
+        ((Wall *)e)->hit();
+    } else {
+        entities.remove(e);
     }
 }
 
@@ -316,6 +340,7 @@ void key_pressed(SDL_Keycode key, KeyBuffer& keybuff) {
     case SDLK_d:
     case SDLK_SPACE:
     case SDLK_ESCAPE:
+    case SDLK_LSHIFT:
         if (!keybuff.find_key(key)) {
             keybuff.push(key);
         }
@@ -329,6 +354,7 @@ void key_released(SDL_Keycode key, KeyBuffer& keybuff) {
     case SDLK_d:
     case SDLK_SPACE:
     case SDLK_ESCAPE:
+    case SDLK_LSHIFT:
         keybuff.remove_key(key);
         break;
     }

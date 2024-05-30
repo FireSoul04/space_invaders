@@ -23,7 +23,6 @@ enum Bounds {
 class Core {
 public:
     Core(uint width, uint height, uint max_aliens_per_row, uint max_rows) {
-        score = 0;
         this->width = width;
         this->height = height;
         this->max_aliens_per_row = max_aliens_per_row;
@@ -31,6 +30,7 @@ public:
         max_aliens = max_aliens_per_row * max_rows;
         entity_width = 20.0;
         entity_height = 10.0;
+        game_over_threshold = height * 3 / 8;
         bounds[LEFT] = entity_width * 2;
         bounds[RIGHT] = width - bounds[LEFT];
         bounds[TOP] = 0.0;
@@ -38,6 +38,7 @@ public:
         fps = 0.0;
         total_frames = 0.0;
         total_seconds = 0.0;
+        score = 0;
         stage = 1;
         time_start = clock();
         last_frame_time = time_start;
@@ -53,6 +54,10 @@ public:
 
     bool is_game_over() {
         return game_over;
+    }
+
+    uint get_game_over_threshold() {
+        return game_over_threshold;
     }
 
     uint get_width() {
@@ -119,6 +124,7 @@ private:
     uint stage;
     uint width;
     uint height;
+    uint game_over_threshold;
     bool game_over;
     double time_start;
     double fps;

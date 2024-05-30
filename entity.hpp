@@ -28,6 +28,10 @@ public:
         velocity = 0.0;
     }
 
+    void set_speed(double speed) {
+        this->speed = speed;
+    }
+
     bool is_colliding(Entity *e) {
         bool is_colliding = false;
         if (e != this) {

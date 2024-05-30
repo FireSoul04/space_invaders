@@ -50,8 +50,8 @@ public:
     Projectile *shoot() {
         Projectile *p = nullptr;
         SDL_Rect *rect = new SDL_Rect();
-        rect->w = 4;
-        rect->h = 8;
+        rect->w = 5;
+        rect->h = 10;
         double offset_x = (sprite->w / 2) - (rect->w / 2) - 1;
         double offset_y = rect->h;
         double x, y;
