@@ -8,11 +8,17 @@
 #include "entity.hpp"
 #include "projectile.hpp"
 
+enum AlienType {
+    CLOSE = 1,
+    MID = 2,
+    FAR = 3
+};
+
 class Alien : public Entity {
 public:
-    Alien(double x, double y, double speed, SDL_Rect *sprite, SDL_Color color) : Entity(x, y, speed) {
+    Alien(double x, double y, AlienType type, SDL_Rect *sprite, SDL_Color color) : Entity(x, y) {
+        this->type = type;
         this->sprite = sprite;
-        this->speed = speed;
         sprite->x = (int)x;
         sprite->y = (int)y;
         this->color = color;
@@ -21,15 +27,17 @@ public:
     }
 
     ~Alien() {
-        core->add_score(100);
+        core->add_score(10 * type);
         delete sprite;
         sprite = nullptr;
     }
 
     // Handles out of bounds
     void update() {
+        speed = *swarm_speed;
+        velocity = *swarm_velocity;
         x += velocity * speed * core->get_delta_time();
-        y += (speed / 16) * core->get_delta_time();
+        y += *swarm_velocity_y * core->get_delta_time();
         sprite->x = (int)x;
         sprite->y = (int)y;
     }
@@ -48,6 +56,22 @@ public:
         return new Projectile(x, y, projectile_speed, 0.1, rect, yellow);
     }
 
+    void set_swarm_speed(double *swarm_speed) {
+        this->swarm_speed = swarm_speed;
+    }
+
+    void set_swarm_velocity(double *swarm_velocity) {
+        this->swarm_velocity = swarm_velocity;
+    }
+
+    void set_swarm_velocity_y(double *swarm_velocity_y) {
+        this->swarm_velocity_y = swarm_velocity_y;
+    }
+
+    AlienType get_type() {
+        return type;
+    }
+
     SDL_Rect *get_sprite() {
         return sprite;
     }
@@ -63,7 +87,11 @@ public:
 private:
     SDL_Rect *sprite;
     SDL_Color color;
+    AlienType type;
     double projectile_speed;
+    double *swarm_speed;
+    double *swarm_velocity;
+    double *swarm_velocity_y;
 };
 
 #endif

@@ -11,14 +11,18 @@
 
 class Swarm : public Entity {
 public:
-    Swarm(double x, double y) : Entity(x, y) {
+    Swarm(double x, double y, double speed, double shoot_frequency) : Entity(x, y, speed) {
+        this->shoot_frequency = shoot_frequency;
         aliens = new Alien *[core->max_aliens];
         init_x = x;
         init_y = y;
-        shoot_frequency = 0;
         aliens_alive = 0;
         velocity = 1.0;
+        velocity_y = 0.0;
+        start_freq = shoot_frequency;
+        start_speed = speed;
         width = core->get_entity_width() * (3 * core->max_aliens_per_row - 2);
+
         reset_timer();
     }
 
@@ -26,37 +30,28 @@ public:
         delete[] aliens;
     }
 
-    void print() {
-        for (int i = 0; i < aliens_alive; i++) {
-            std::cout << i << ", ";
-        }
-        std::cout << std::endl << "\033[1A";
-    }
-
     void restart() {
         x = init_x;
         y = init_y;
         aliens_alive = 0;
         velocity = 1.0;
+        velocity_y = 0.0;
+        reset_stats();
         reset_timer();
     }
 
     // Handles out of bounds
     void update() {
-        if (x < core->get_bounds(LEFT) ||
-            x + width > core->get_bounds(RIGHT)) {
+        if (left_alien() < core->get_bounds(LEFT) ||
+            right_alien() + core->get_entity_width() > core->get_bounds(RIGHT)) {
             velocity *= -1.0;
+            velocity_y = 5000.0;
+        } else {
+            velocity_y = 0.0;
         }
 
         x += velocity * speed * core->get_delta_time();
-        y += (speed / 16) * core->get_delta_time();
-        
-        // Update all aliens alive in the swarm
-        for (int i = 0; i < core->max_aliens; i++) {
-            if (aliens[i] != nullptr) {
-                aliens[i]->set_velocity(velocity);
-            }
-        }
+        y += velocity_y * speed * core->get_delta_time();
     }
 
     Projectile *shoot() {
@@ -72,6 +67,9 @@ public:
     }
 
     void add_alien(Alien *alien, int index) {
+        alien->set_swarm_speed(&speed);
+        alien->set_swarm_velocity(&velocity);
+        alien->set_swarm_velocity_y(&velocity_y);
         aliens[index] = alien;
         aliens_alive++;
     }
@@ -92,12 +90,20 @@ public:
         }
     }
 
-    void set_shoot_frequency(double shoot_frequency) {
-        this->shoot_frequency = shoot_frequency;
+    double last_row_alien_height() {
+        double last_y = 0.0;
+        for (int i = 0; i < core->max_aliens; i++) {
+            Alien *a = aliens[i];
+            if (a != nullptr && a->Y() >= last_y) {
+                last_y = a->Y();
+            }
+        }
+        return last_y;
     }
 
-    void set_speed(double speed) {
-        this->speed = speed;
+    void double_stats() {
+        shoot_frequency *= 0.9;
+        speed *= 2;
     }
 
     double get_speed() {
@@ -122,8 +128,35 @@ private:
         return is_ready;
     }
 
+    void reset_stats() {
+        shoot_frequency = start_freq;
+        speed = start_speed;
+    }
+
     void reset_timer() {
         shoot_timer = clock();
+    }
+
+    double left_alien() {
+        double left_x = core->get_width();
+        for (int i = 0; i < core->max_aliens; i++) {
+            Alien *a = aliens[i];
+            if (a != nullptr && a->X() <= left_x) {
+                left_x = a->X();
+            }
+        }
+        return left_x;
+    }
+
+    double right_alien() {
+        double right_x = 0.0;
+        for (int i = 0; i < core->max_aliens; i++) {
+            Alien *a = aliens[i];
+            if (a != nullptr && a->X() >= right_x) {
+                right_x = a->X();
+            }
+        }
+        return right_x;
     }
 
     Alien *search_random_alien() {
@@ -145,9 +178,12 @@ private:
     int aliens_alive;
     clock_t shoot_timer;
     double shoot_frequency;
+    double velocity_y;
     double width;
     double init_x;
     double init_y;
+    double start_freq;
+    double start_speed;
 };
 
 #endif

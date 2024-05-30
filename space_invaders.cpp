@@ -13,12 +13,6 @@ void test_speedup(KeyBuffer& keybuff, EntityList& entities, Swarm& s) {
     } else {
         s.set_speed(start_swarm_speed);
     }
-    
-    for (int i = 0; i < entities.size(); i++) {
-        if (entities[i] != nullptr && entities[i]->get_class() == ALIEN) {
-            entities[i]->set_speed(s.get_speed());
-        }
-    }
 }
 
 int main(int argc, char **argv) {
@@ -74,7 +68,7 @@ void init(EntityList& entities) {
     double player_init_x = core->get_width() / 2;
     double player_init_y = core->get_height() * 7 / 8;
     double player_speed = 200.0;
-    double player_shoot_frequency = 1.0; // Seconds
+    double player_shoot_frequency = 0.1;//1.0; // Seconds
     SDL_Rect *rect = new SDL_Rect();
     rect->w = (int)core->get_entity_width();
     rect->h = (int)core->get_entity_height();
@@ -90,13 +84,15 @@ void loop(SDL_Window *window, SDL_Renderer *renderer, EntityList& entities) {
     // Swarm details
     double swarm_init_x = core->get_bounds(LEFT);
     double swarm_init_y = core->get_bounds(TOP);
-    Swarm swarm(swarm_init_x, swarm_init_y);
+    double swarm_speed = 30.0;
+    double swarm_shoot_frequency = 1.0;
+    Swarm swarm(swarm_init_x, swarm_init_y, swarm_speed, swarm_shoot_frequency);
     spawn_aliens(entities, swarm);
     spawn_walls(entities);
 
-    start_swarm_speed = swarm.get_speed();
+    //start_swarm_speed = swarm.get_speed();
     running = true;
-    while (running) {
+    //while (running) {
         core->reset_game_over();
         while (running && !core->is_game_over() && 
             !keybuff.find_key(SDLK_ESCAPE)) {
@@ -104,18 +100,18 @@ void loop(SDL_Window *window, SDL_Renderer *renderer, EntityList& entities) {
             move_player(keybuff, player);
             shoot_player(entities, keybuff, player);
 
-            check_game_over(swarm);
+            check_game_over(entities, swarm);
             check_aliens_alive(entities, swarm);
             shoot_swarm(entities, swarm);
             update(entities, swarm);
 
             // TESTING
-            test_speedup(keybuff, entities, swarm);
+            //test_speedup(keybuff, entities, swarm);
             // TESTING
 
             render(renderer, entities, player->get_lives());
             core->update_frame();
-            std::cout << core->get_fps() << "\033[1A" << std::endl;
+            std::cout << "FPS: " << core->get_fps() << "\033[1A" << std::endl;
         }
         SDL_SetRenderDrawColor(renderer, black.r, black.g, black.b, black.a);
         SDL_RenderClear(renderer);
@@ -126,7 +122,7 @@ void loop(SDL_Window *window, SDL_Renderer *renderer, EntityList& entities) {
         while (running && !keybuff.find_key(SDLK_ESCAPE)) {
             running = get_input(keybuff);
         }
-    }
+    //}
 }
 
 void update(EntityList& entities, Swarm& s) {
@@ -191,8 +187,9 @@ void render_string(SDL_Renderer *renderer, const char *str, int x, int y) {
     SDL_DestroyTexture(textTexture);
 }
 
-void check_game_over(Swarm& swarm) {
-    if (swarm.Y() >= core->get_game_over_threshold()) {
+void check_game_over(EntityList& entities, Swarm& s) {
+    double last_y = s.last_row_alien_height();
+    if (last_y >= core->get_game_over_threshold()) {
         core->set_game_over();
     }
 }
@@ -217,16 +214,13 @@ void spawn_walls(EntityList& entities) {
 void spawn_aliens(EntityList& entities, Swarm& s) {
     Alien *a;
     SDL_Rect *rect;
+    AlienType type;
     double init_x;
     double init_y;
     double offset_x;
     double offset_y;
-    double swarm_speed = 25.0 + core->get_stage() * 5.0;
-    double swarm_shoot_freq = 5.0 / core->get_stage();
 
     s.restart();
-    s.set_speed(swarm_speed);
-    s.set_shoot_frequency(swarm_shoot_freq);
 
     for (int i = 0; i < core->max_aliens; i++) {
         rect = new SDL_Rect();
@@ -236,16 +230,23 @@ void spawn_aliens(EntityList& entities, Swarm& s) {
         offset_y = 40 * (i / core->max_aliens_per_row);
         init_x = core->get_bounds(LEFT) + offset_x;
         init_y = 100 + offset_y;
-        a = new Alien(init_x, init_y, s.get_speed(), rect, white);
+        type = (AlienType)(((core->max_aliens - i) / (core->max_aliens_per_row * 2)) + 1);
+        a = new Alien(init_x, init_y, type, rect, white);
         s.add_alien(a, i);
         entities.instantiate(a);
     }
 }
 
 void check_aliens_alive(EntityList& entities, Swarm& s) {
+    static uint next_stage_threshold = core->max_aliens / 2;
+
     if (entities.how_many_instances_of(ALIEN) == 0) {
-        core->increase_stage();
+        next_stage_threshold = core->max_aliens / 2;
         spawn_aliens(entities, s);
+    } else if (entities.how_many_instances_of(ALIEN) <= next_stage_threshold) {
+        next_stage_threshold /= 2;  // Speed up the aliens when
+        s.double_stats();
+        start_swarm_speed = s.get_speed();
     }
 }
 

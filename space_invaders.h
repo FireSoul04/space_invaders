@@ -28,7 +28,7 @@ inline bool get_input(KeyBuffer& keybuff);
 inline void key_pressed(SDL_Keycode key, KeyBuffer& keybuff);
 inline void key_released(SDL_Keycode key, KeyBuffer& keybuff);
 
-inline void check_game_over(Swarm& swarm);
+inline void check_game_over(EntityList& entities, Swarm& s);
 
 // Updates all entities in the entity list calling the
 // update methods of each entity subclass

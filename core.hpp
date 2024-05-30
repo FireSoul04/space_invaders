@@ -30,7 +30,7 @@ public:
         max_aliens = max_aliens_per_row * max_rows;
         entity_width = 20.0;
         entity_height = 10.0;
-        game_over_threshold = height * 3 / 8;
+        game_over_threshold = height * 5 / 8;
         bounds[LEFT] = entity_width * 2;
         bounds[RIGHT] = width - bounds[LEFT];
         bounds[TOP] = 0.0;
@@ -38,10 +38,9 @@ public:
         fps = 0.0;
         total_frames = 0.0;
         total_seconds = 0.0;
-        score = 0;
-        stage = 1;
         time_start = clock();
         last_frame_time = time_start;
+        reset_score();
     }
 
     void set_game_over() {
@@ -76,12 +75,8 @@ public:
         return entity_height;
     }
 
-    uint get_stage() {
-        return stage;
-    }
-
-    void increase_stage() {
-        stage++;
+    void reset_score() {
+        score = 0;
     }
 
     void add_score(uint score) {
@@ -121,7 +116,6 @@ public:
 
 private:
     uint score;
-    uint stage;
     uint width;
     uint height;
     uint game_over_threshold;
