@@ -1,0 +1,3 @@
+#pragma once
+
+#define FONT_PATH "@FONT_PATH@"
