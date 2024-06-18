@@ -1,3 +1,3 @@
 #pragma once
 
-#define FONT_PATH "C:/Projects/space_invaders/src/assets/font.ttf"
+#define FONT_PATH "/home/davide/Desktop/space_invaders/src/assets/font.ttf"

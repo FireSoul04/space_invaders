@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include "game_core/core.hpp"
 #include "game_core/keybuffer.hpp"

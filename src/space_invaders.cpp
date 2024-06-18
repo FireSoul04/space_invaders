@@ -3,11 +3,13 @@
 #include <string>
 #include <ctime>
 
-#include <SDL.h>
-#include <SDL_ttf.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 #include "config.h"
 #include "space_invaders.h"
+
+TTF_Font *font;
 
 int main(int argc, char **argv) {
     SDL_Window *window;
@@ -43,6 +45,12 @@ int main(int argc, char **argv) {
         std::cerr << SDL_GetError() << std::endl;
         SDL_DestroyWindow(window);
         SDL_Quit();
+        std::exit(EXIT_FAILURE);
+    }
+
+    font = TTF_OpenFont(FONT_PATH, 24);
+    if (font == nullptr) {
+        std::cerr << "Font failed to create: " << TTF_GetError() << std::endl;
         std::exit(EXIT_FAILURE);
     }
 
@@ -178,7 +186,7 @@ void menu(SDL_Renderer *renderer, KeyBuffer& keybuff) {
             std::exit(EXIT_SUCCESS);
         }
         time += 250;
-        _sleep(250);
+        SDL_Delay(250);
     }
 }
 
@@ -231,11 +239,6 @@ void render_all(SDL_Renderer *renderer, EntityList& entities) {
 }
 
 void render_string(SDL_Renderer *renderer, const char *str, int x, int y) {
-    TTF_Font *font = TTF_OpenFont(FONT_PATH, 24);
-    if (font == nullptr) {
-        std::cerr << "Font failed to create: " << TTF_GetError() << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
     SDL_Surface* textSurface = TTF_RenderText_Solid(font, str, white);
     if (textSurface == nullptr) {
         std::cerr << TTF_GetError() << std::endl;
@@ -329,7 +332,8 @@ void remove_projectiles(EntityList& entities, std::shared_ptr<Swarm>& s, std::sh
     bool is_colliding = false;
     std::shared_ptr<Entity> entity_hit = nullptr;
     for (int i = 0; i < entities.size() && !is_colliding; i++) {
-        is_colliding = p->is_colliding(entities[i]);
+        std::shared_ptr<Entity> e = entities[i];
+        is_colliding = p->is_colliding(e);
         if (is_colliding) {
             entity_hit = entities[i];
         }
@@ -345,7 +349,8 @@ void remove_projectiles(EntityList& entities, std::shared_ptr<Swarm>& s, std::sh
 
 void remove_entity_colliding(EntityList& entities, std::shared_ptr<Swarm>& s, std::shared_ptr<Entity>& e) {
     if (e is ALIEN) {
-        s->remove_alien(std::static_pointer_cast<Alien>(e));
+        std::shared_ptr<Alien> a = std::static_pointer_cast<Alien>(e);
+        s->remove_alien(a);
     }
     e->die();
 }

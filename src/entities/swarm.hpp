@@ -2,7 +2,7 @@
 
 #include <cstdlib>
 #include <ctime>
-#include <SDL.h>
+#include <SDL2/SDL.h>
 
 #include "../game_core/core.hpp"
 #include "entity.hpp"
