@@ -1,38 +1,29 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(space_invaders)
 
-# Create an option to switch between a system sdl library and a vendored sdl library
-option(SPACE_INVADERS_VENDORED "Use vendored libraries" OFF)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
 
-if(SPACE_INVADERS_VENDORED)
-    add_subdirectory(vendored/sdl EXCLUDE_FROM_ALL)
-else()
-    # 1. Look for a SDL2 package, 2. look for the SDL2 component and 3. fail if none can be found
-    find_package(SDL2 REQUIRED)
-
-    # 1. Look for a SDL2 package, 2. Look for the SDL2maincomponent and 3. DO NOT fail when SDL2main is not available
-    find_package(SDL2_ttf REQUIRED)
-endif()
+find_package(SDL2 REQUIRED)
+find_package(SDL2_ttf REQUIRED)
 
 set(FONT_PATH "${CMAKE_BINARY_DIR}/assets/font.ttf")
 configure_file(config.h.in "${CMAKE_CURRENT_LIST_DIR}/config.h")
 
-# Create your game executable target as usual
-add_executable(${PROJECT_NAME} #WIN32 
+add_executable(${PROJECT_NAME}
     space_invaders.cpp
-    entities/entity.cpp
-    entities/ship.cpp
-    entities/alien.cpp
-    entities/swarm.cpp
-    entities/wall.cpp
-    entities/projectile.cpp
     game_core/core.cpp
     game_core/entitylist.cpp
     game_core/keybuffer.cpp
+    entities/entity.cpp
+    entities/projectile.cpp
+    entities/alien.cpp
+    entities/ship.cpp
+    entities/swarm.cpp
+    entities/wall.cpp
 )
 
-# Link to the actual SDL2 library. SDL2::SDL2 is the shared SDL library, SDL2::SDL2-static is the static SDL libarary.
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::Main)
 target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::TTF)
 
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
+
