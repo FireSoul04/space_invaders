@@ -79,6 +79,9 @@ void Core::update_frame() {
     total_seconds = duration_cast<seconds>(system_clock::now() - time_start).count();
     delta_time = (duration_cast<nanoseconds>(system_clock::now() - last_frame_time).count()) / 1000000000.0;
     fps = total_frames / total_seconds;
+    while (delta_time < 1) {
+        delta_time += 0.1;
+    }
     last_frame_time = system_clock::now();
 }
 

@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "swarm.hpp"
 
 Swarm::Swarm(double x, double y, double speed, double shoot_frequency) : Entity(x, y, speed, false) {
@@ -9,6 +11,7 @@ Swarm::Swarm(double x, double y, double speed, double shoot_frequency) : Entity(
     start_freq = shoot_frequency;
     start_speed = speed;
     width = core.get_entity_width() * (3 * core.max_aliens_per_row - 2);
+    std::cout << width;
     alive = false;
     reset_timer();
 }

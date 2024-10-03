@@ -201,6 +201,7 @@ void update(EntityList& entities, KeyBuffer& keybuff, std::shared_ptr<Swarm>& sw
     for (int i = 0; i < entities.size(); i++) {
         std::shared_ptr<Entity> e = entities[i];
 
+        swarm->update();
         e->update();
         if (e is PROJECTILE) {
             std::shared_ptr<Projectile> p = std::static_pointer_cast<Projectile>(e);
