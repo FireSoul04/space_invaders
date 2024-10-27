@@ -3,6 +3,7 @@
 .vs
 .vscode
 build
+src/config.h
 
 # Compiled Object files
 *.slo
